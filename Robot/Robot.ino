@@ -71,7 +71,7 @@ void loop() {
 
   //Drive
   Serial.println();
-  if (!handSensed && pumpTriggered==0){
+  if (!handSensed && beepCountdown==0){
       motorL.setSpeed(100);   
       motorR.setSpeed(255);  
   }
