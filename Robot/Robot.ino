@@ -11,6 +11,10 @@ int motorRightA = 10;
 int motorRightB = 11;
 int mosfetPump = 5;
 int buzzer = 6;
+//TODO: make all the limit switches (left, right, front, back)
+int limSwitchL = -1;
+int limSwitchR = -1;
+int limSwitchF = -1;
 
 bool handSensed = false;
 int beepCountdown = 0;
@@ -18,11 +22,6 @@ int beepCountdown = 0;
 CytronMD motorL(PWM_PWM, motorLeftA, motorLeftB);
 CytronMD motorR(PWM_PWM, motorRightA, motorRightB);
 VL53L0X distSensor;
-
-//TODO: make and init all the limit switches (left, right, front, back)
-int limSwitchL = -1;
-int limSwitchR = -1;
-int limSwitchF = -1;
 
 
 void setup() {
