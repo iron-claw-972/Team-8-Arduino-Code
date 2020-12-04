@@ -79,7 +79,7 @@ void loop() {
   Serial.println();
   if (!handSensed && beepCountdown==0){
     //not sanitizing, chooses which direction to drive
-    //which ever limit switch has the greatest output will decide the direction
+    //whichever limit switch has the greatest output will decide the direction
     if (analogRead(limSwitchL) == 0 && analogRead(limSwitchR) == 0 && analogRead(limSwitchF) == 0){
       //noting detected, keep moving foward
       motorL.setSpeed(200);
