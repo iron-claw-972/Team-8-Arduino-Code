@@ -80,19 +80,20 @@ void loop() {
   if (!handSensed && beepCountdown==0){
     //not sanitizing, chooses which direction to drive
     //whichever limit switch has the greatest output will decide the direction
-    if (analogRead(limSwitchL) == 0 && analogRead(limSwitchR) == 0 && analogRead(limSwitchF) == 0){
+    if (digitalRead(limSwitchL) == LOW && digitalRead(limSwitchR) == LOW && digitalRead(limSwitchF) == LOW){
       //noting detected, keep moving foward
       motorL.setSpeed(200);
       motorR.setSpeed(200);
 
-    } else if(analogRead(limSwitchL) > analogRead(limSwitchF) && analogRead(limSwitchL) > analogRead(limSwitchR)){
+    } else if(digitalRead(limSwitchL) == HIGH && digitalRead(limSwitchR) == LOW){
+      //senses on the left, turns backwards and right
       motorL.setSpeed(200);
       motorR.setSpeed(-200);
       delay(750); //TODO: Find correct time to do 135 degree turn
       motorL.setSpeed(200);
       motorR.setSpeed(200);
 
-    } else if (analogRead(limSwitchR) > analogRead(limSwitchF) && analogRead(limSwitchR) > analogRead(limSwitchL)) {
+    } else if (digitalRead(limSwitchR) == HIGH && digitalRead(limSwitchL) == LOW) {
       motorL.setSpeed(-200);
       motorR.setSpeed(200);
       delay(750); //TODO: Find correct time to do 135 degree turn
@@ -100,7 +101,7 @@ void loop() {
       motorR.setSpeed(200);
 
     } else {
-      //otherwise if left or right aren't larger then it will do a 180
+      //otherwise if not left or right or nothing it will do 180
       motorL.setSpeed(200);
       motorR.setSpeed(-200);
       delay(1000); //TODO: Find correct time to do 180 degree turn
