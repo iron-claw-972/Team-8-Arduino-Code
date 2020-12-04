@@ -88,14 +88,14 @@ void loop() {
       motorL.setSpeed(200);
       motorR.setSpeed(200);
 
-    } else if(digitalRead(limSwitchL) == HIGH && digitalRead(limSwitchR) == LOW){
+    } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
       motorL.setSpeed(200);
       motorR.setSpeed(-200);
       delay(750); //TODO: Find correct time to do 135 degree turn
       motorL.setSpeed(200);
       motorR.setSpeed(200);
 
-    } else if (digitalRead(limSwitchR) == HIGH && digitalRead(limSwitchL) == LOW) {
+    } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
       motorL.setSpeed(-200);
       motorR.setSpeed(200);
       delay(750); //TODO: Find correct time to do 135 degree turn
