@@ -14,7 +14,8 @@ int buzzer = 6;
 //TODO: make all the limit switches (left, right, front, back)
 int limSwitchL = -1;
 int limSwitchR = -1;
-int limSwitchF = -1;
+int limSwitchF1 = -1;
+int limSwitchF2 = -1;
 
 bool handSensed = false;
 int beepCountdown = 0;
@@ -32,7 +33,8 @@ void setup() {
 
   pinMode(limSwitchL, INPUT);
   pinMode(limSwitchR, INPUT);
-  pinMode(limSwitchF, INPUT);
+  pinMode(limSwitchF1, INPUT);
+  pinMode(limSwitchF2, INPUT);
 
   Wire.begin();
 
@@ -80,7 +82,8 @@ void loop() {
   if (!handSensed && beepCountdown==0){
     //not sanitizing, chooses which direction to drive
     //whichever limit switch has the greatest output will decide the direction
-    if (digitalRead(limSwitchL) == LOW && digitalRead(limSwitchR) == LOW && digitalRead(limSwitchF) == LOW){
+
+    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW){
       //noting detected, keep moving foward
       motorL.setSpeed(200);
       motorR.setSpeed(200);
