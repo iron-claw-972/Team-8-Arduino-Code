@@ -86,7 +86,6 @@ void loop() {
       motorR.setSpeed(200);
 
     } else if(digitalRead(limSwitchL) == HIGH && digitalRead(limSwitchR) == LOW){
-      //senses on the left, turns backwards and right
       motorL.setSpeed(200);
       motorR.setSpeed(-200);
       delay(750); //TODO: Find correct time to do 135 degree turn
