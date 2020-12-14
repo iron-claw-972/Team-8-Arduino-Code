@@ -10,13 +10,14 @@ int motorLeftB = 9;
 int motorRightA = 10;
 int motorRightB = 11;
 int mosfetPump = 5;
-int buzzer = 6;
+int buzzer = 4;
 //TODO: make all the limit switches (left, right, front, back)
 int limSwitchL = -1;
 int limSwitchR = -1;
 int limSwitchF1 = -1;
 int limSwitchF2 = -1;
 
+bool sensed = false;
 bool handSensed = false;
 int beepCountdown = 0;
 
@@ -27,6 +28,7 @@ VL53L0X distSensor;
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("hi");
 
   pinMode(buzzer, OUTPUT);
   pinMode(mosfetPump, OUTPUT);
@@ -39,9 +41,10 @@ void setup() {
   Wire.begin();
 
   distSensor.setTimeout(500);
-  if (!distSensor.init()){
-    Serial.println("Failed to detect and initialize distSensor!");
-    while (1) {}
+  if (!distSensor.init())
+  {
+    Serial.println("Failed to detect and initialize sensor!");
+
   }
 
   // Start continuous back-to-back mode (take readings as
@@ -49,32 +52,35 @@ void setup() {
   // instead, provide a desired inter-measurement period in
   // ms (e.g. distSensor.startContinuous(100)).
   distSensor.startContinuous();
-
+  Serial.println("hi2");
 }
 
 void loop() {
   // Handle the hand
-  Serial.print(distSensor.readRangeContinuousMillimeters());
+  Serial.print(sensor.readRangeContinuousMillimeters());
 
-  handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters()<1400;
+  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700 && sensed;
+  sensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700;
   if (handSensed){
     motorL.setSpeed(0);
     motorR.setSpeed(0);
     beepCountdown++;
-    tone(buzzer, 1000); // Send 1KHz sound signal...
-    delay(600);
+    digitalWrite(buzzer,HIGH);
+    //tone(buzzer, 1000); // Send 1KHz sound signal...
+    delay(1000);
   }
   else{
     handSensed = false;
     beepCountdown = 0;
-    noTone(buzzer);
+    //noTone(buzzer);
+    digitalWrite(buzzer,LOW);
   }
 
   // Sanitize
   if (beepCountdown>2){
-    analogWrite(mosfetPump, 230);
-    delay(1000);
-    analogWrite(mosfetPump, 0);
+    digitalWrite(mosfetPump, HIGH);
+    delay(2000);
+    digitalWrite(mosfetPump, LOW);
   }
 
   //Drive
