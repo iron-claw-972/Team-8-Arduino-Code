@@ -10,8 +10,9 @@ int motorLeftB = 9;
 int motorRightA = 10;
 int motorRightB = 11;
 int mosfetPump = 5;
-int buzzer = 6;
+int buzzer = 4;
 
+bool sensed = false;
 bool handSensed = false;
 int beepCountdown = 0;
 
@@ -22,6 +23,7 @@ VL53L0X sensor;
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("hi");
 
   pinMode(buzzer, OUTPUT);
   pinMode(mosfetPump, OUTPUT); 
@@ -32,7 +34,7 @@ void setup() {
   if (!sensor.init())
   {
     Serial.println("Failed to detect and initialize sensor!");
-    while (1) {}
+
   }
 
   // Start continuous back-to-back mode (take readings as
@@ -40,40 +42,44 @@ void setup() {
   // instead, provide a desired inter-measurement period in
   // ms (e.g. sensor.startContinuous(100)).
   sensor.startContinuous();
+  Serial.println("hi2");
 
 }
 
 void loop() {
   // Handle the hand
   Serial.print(sensor.readRangeContinuousMillimeters());
-
-  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<1400;
+  
+  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700 && sensed;
+  sensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700;
   if (handSensed){
     motorL.setSpeed(0);   
     motorR.setSpeed(0); 
     beepCountdown++;
-    tone(buzzer, 1000); // Send 1KHz sound signal...
-    delay(600);
+    digitalWrite(buzzer,HIGH);
+    //tone(buzzer, 1000); // Send 1KHz sound signal...
+    delay(1000);
   }
   else{
     handSensed = false;
     beepCountdown = 0;
-    noTone(buzzer);
+    //noTone(buzzer);
+    digitalWrite(buzzer,LOW);
   }
 
 
   // Sanitize
   if (beepCountdown>2){
-    analogWrite(mosfetPump, 230);
-    delay(1000);
-    analogWrite(mosfetPump, 0);
+    digitalWrite(mosfetPump, HIGH);
+    delay(2000);
+    digitalWrite(mosfetPump, LOW);
   }
 
   //Drive
   Serial.println();
   if (!handSensed && beepCountdown==0){
       motorL.setSpeed(100);   
-      motorR.setSpeed(255);  
+      motorR.setSpeed(-100);  
   }
 
 }
