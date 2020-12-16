@@ -91,29 +91,29 @@ void loop() {
 
     if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW){
       //noting detected, keep moving foward
-      motorL.setSpeed(200);
-      motorR.setSpeed(-200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(-100);
 
     } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
-      motorL.setSpeed(200);
-      motorR.setSpeed(200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(100);
       delay(750); //TODO: Find correct time to do 135 degree turn
-      motorL.setSpeed(200);
-      motorR.setSpeed(-200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(-100);
 
     } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
-      motorL.setSpeed(-200);
-      motorR.setSpeed(-200);
+      motorL.setSpeed(-105);
+      motorR.setSpeed(-100);
       delay(750); //TODO: Find correct time to do 135 degree turn
-      motorL.setSpeed(200);
-      motorR.setSpeed(-200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(-100);
 
     } else {
       //otherwise if not left or right or nothing it will do 180
-      motorL.setSpeed(200);
-      motorR.setSpeed(200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(100);
       delay(1000); //TODO: Find correct time to do 180 degree turn
-      motorL.setSpeed(200);
-      motorR.setSpeed(-200);
+      motorL.setSpeed(105);
+      motorR.setSpeed(-100);
   }
 }
