@@ -57,10 +57,10 @@ void setup() {
 
 void loop() {
   // Handle the hand
-  Serial.print(sensor.readRangeContinuousMillimeters());
+  Serial.print(distSensor.readRangeContinuousMillimeters());
 
-  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700 && sensed;
-  sensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters()<700;
+  handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters()<700 && sensed;
+  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters()<700;
   if (handSensed){
     motorL.setSpeed(0);
     motorR.setSpeed(0);
