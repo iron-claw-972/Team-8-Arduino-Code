@@ -18,6 +18,9 @@ MPU6050 mpu;
 
 int intSensorResult = 0; //Sensor result
 float fltSensorCalc = 0; //Calculated value
+unsigned long myTime;
+int timeDiff;
+int rotation=0;
 
 bool sensed = false;
 bool handSensed = false;
@@ -95,29 +98,37 @@ void setup() {
   }
   mpu.calibrateGyro();
   checkSettings();
+  myTime = millis();
 
 }
 
 void loop() {
+  
+  
   // Handle the distance sensor
   //Serial.print(sensor.readRangeContinuousMillimeters());
+  
   intSensorResult = analogRead(IR_SENSOR); //Get sensor value
   fltSensorCalc = (6787.0 / (intSensorResult - 3.0)) - 4.0; //Calculate distance in cm
-
-  Serial.print(fltSensorCalc); //Send distance to computer
-  Serial.println(" cm"); //Add cm to result
+  
+//  Serial.print(fltSensorCalc); //Send distance to computer
+//  Serial.println(" cm"); //Add cm to result
 
   //handle accelerometer
   Vector normGyro = mpu.readNormalizeGyro();
-  Vector normAccel = mpu.readNormalizeAccel();
+  timeDiff = millis() - myTime;
+  myTime = millis();
+  //Vector normAccel = mpu.readNormalizeAccel();
 
-  Serial.print(" Xnorm = ");
-  Serial.print(normGyro.XAxis);
-  Serial.print(" Ynorm = ");
-  Serial.print(normGyro.YAxis);
-  Serial.print(" Znorm = ");
-  Serial.println(normGyro.ZAxis);
-
+//  Serial.print(" Xnorm = ");
+//  Serial.print(normGyro.XAxis);
+//  Serial.print(" Ynorm = ");
+//  Serial.print(normGyro.YAxis);
+//  Serial.print(" Znorm = ");
+//  Serial.println(normGyro.ZAxis);
+  rotation+=normGyro.ZAxis * timeDiff/1000;
+  rotation = rotation%360;
+  Serial.println(rotation);
   //  Serial.print(" Xnorm = ");
   //  Serial.print(normAccel.XAxis);
   //  Serial.print(" Ynorm = ");
@@ -138,20 +149,21 @@ void loop() {
     digitalWrite(buzzer, HIGH);
     //tone(buzzer, 1000); // Send 1KHz sound signal...
     delay(1000);
+    digitalWrite(buzzer, LOW);
   }
   else {
     handSensed = false;
     beepCountdown = 0;
     //noTone(buzzer);
-    digitalWrite(buzzer, LOW);
   }
 
 
   // Sanitize
   if (beepCountdown > 2) {
     digitalWrite(mosfetPump, HIGH);
-    delay(200);
+    delay(150);
     digitalWrite(mosfetPump, LOW);
+    delay(1000);
   }
 
   //Drive
