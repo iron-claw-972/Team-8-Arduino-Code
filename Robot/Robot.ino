@@ -12,6 +12,10 @@ int motorRightA = 10;
 int motorRightB = 11;
 int mosfetPump = 5;
 int buzzer = 4;
+int limSwitchL = -1 //TODO: put correct pins here
+int limSwitchR = -1
+int limSwitchF1 = -1
+int limSwitchF2 = -1
 int IR_SENSOR = 0; // Sensor is connected to the analog A0
 
 MPU6050 mpu;
@@ -94,7 +98,7 @@ void setup() {
   // fast as possible).  To use continuous timed mode
   // instead, provide a desired inter-measurement period in
   // ms (e.g. sensor.startContinuous(100)).
-  sensor.startContinuous();
+  distSensor.startContinuous();
 
   while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -145,8 +149,8 @@ void loop() {
 
 
   // Handle the hand
-  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700 && sensed;
-  sensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700;
+  handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && sensed && fltSensorCalc < 70;
+  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && fltSensorCalc < 70;
   if (handSensed) {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
