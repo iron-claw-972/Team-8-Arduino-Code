@@ -149,8 +149,8 @@ void loop() {
 
 
   // Handle the hand
-  handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && sensed && fltSensorCalc < 70;
-  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && fltSensorCalc < 70;
+  handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && sensed
+  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
   if (handSensed) {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
@@ -180,7 +180,7 @@ void loop() {
     //not sanitizing, chooses which direction to drive
     //whichever limit switch has the greatest output will decide the direction
 
-    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW){
+    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 15){
       //noting detected, keep moving foward
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
