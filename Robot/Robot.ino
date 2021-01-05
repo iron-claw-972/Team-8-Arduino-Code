@@ -180,7 +180,7 @@ void loop() {
     //not sanitizing, chooses which direction to drive
     //whichever limit switch has the greatest output will decide the direction
 
-    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 15){
+    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 25){
       //noting detected, keep moving foward
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
