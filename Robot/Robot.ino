@@ -121,10 +121,10 @@ double getRotation(double currentAngle, int timeDiff){
 
 void turn(double targetAngle){
   double currentAngle = 0;
-  double angleDiff;
+  double angleDiff = currentAngle - targetAngle;
   double rotationSpeed;
   unsigned long myTime = millis();
-  while (currentAngle-targetAngle > 4 or currentAngle-targetAngle < -4){
+  while (angleDiff > 4 or angleDiff < -4){
     angleDiff=currentAngle-targetAngle;
     rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
 
