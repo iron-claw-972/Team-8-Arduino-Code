@@ -193,12 +193,12 @@ void loop() {
       motorR.setSpeed(-100);
 
     } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
-      turn(-900);
+      turn(900);
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
 
     } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
-      turn(900);
+      turn(-900);
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
 
