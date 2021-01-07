@@ -120,26 +120,22 @@ double getRotation(double currentAngle, int timeDiff){
 
 
 void turn(double targetAngle){
-  int timeDiff = 0;
   double currentAngle = 0;
   double angleDiff;
   double rotationSpeed;
   unsigned long myTime = millis();
-  while (((currentAngle-targetAngle)>4) or ((currentAngle-targetAngle)<-4)){
+  while (currentAngle-targetAngle > 4 or currentAngle-targetAngle < -4){
     angleDiff=currentAngle-targetAngle;
     rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
-    delay(5);
 
     motorL.setSpeed(rotationSpeed);
     motorR.setSpeed(-(-rotationSpeed));
+    delay(5);
 
-    timeDiff = millis() - myTime;
+    currentAngle = getRotation(currentAngle, millis() - myTime);
     myTime = millis();
-    currentAngle = getRotation(currentAngle,timeDiff);
     Serial.println(angleDiff);
-
   }
-
 }
 
 void loop() {
