@@ -1,5 +1,5 @@
 #include <MPU6050.h>
-
+#include <math.h>
 
 #include <VL53L0X.h>
 
@@ -19,8 +19,7 @@ MPU6050 mpu;
 int intSensorResult = 0; //Sensor result
 float fltSensorCalc = 0; //Calculated value
 unsigned long myTime;
-int timeDiff;
-int rotation=0;
+
 
 bool sensed = false;
 bool handSensed = false;
@@ -98,8 +97,40 @@ void setup() {
   }
   mpu.calibrateGyro();
   checkSettings();
-  myTime = millis();
+  delay(500);
 
+}
+
+
+double getRotation(double currentAngle, int timeDiff){
+    Vector normGyro = mpu.readNormalizeGyro();
+    currentAngle+=normGyro.ZAxis * timeDiff/1000.0;
+    //w3currentAngle=fmod(currentAngle,360.0);
+    return currentAngle;
+}
+
+
+void turn(double targetAngle){
+  int timeDiff = 0;
+  double currentAngle = 0;
+  double angleDiff;
+  double rotationSpeed;
+  unsigned long myTime = millis();
+  while (((currentAngle-targetAngle)>4) or ((currentAngle-targetAngle)<-4)){
+    angleDiff=currentAngle-targetAngle;
+    rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
+    delay(5);
+    
+    motorL.setSpeed(rotationSpeed);
+    motorR.setSpeed(-(-rotationSpeed));
+
+    timeDiff = millis() - myTime;
+    myTime = millis();
+    currentAngle = getRotation(currentAngle,timeDiff);
+    Serial.println(angleDiff);
+
+  }
+  
 }
 
 void loop() {
@@ -114,30 +145,9 @@ void loop() {
 //  Serial.print(fltSensorCalc); //Send distance to computer
 //  Serial.println(" cm"); //Add cm to result
 
-  //handle accelerometer
-  Vector normGyro = mpu.readNormalizeGyro();
-  timeDiff = millis() - myTime;
-  myTime = millis();
-  //Vector normAccel = mpu.readNormalizeAccel();
-
-//  Serial.print(" Xnorm = ");
-//  Serial.print(normGyro.XAxis);
-//  Serial.print(" Ynorm = ");
-//  Serial.print(normGyro.YAxis);
-//  Serial.print(" Znorm = ");
-//  Serial.println(normGyro.ZAxis);
-  rotation+=normGyro.ZAxis * timeDiff/1000;
-  rotation = rotation%360;
-  Serial.println(rotation);
-  //  Serial.print(" Xnorm = ");
-  //  Serial.print(normAccel.XAxis);
-  //  Serial.print(" Ynorm = ");
-  //  Serial.print(normAccel.YAxis);
-  //  Serial.print(" Znorm = ");
-  //  Serial.println(normAccel.ZAxis);
-  //
-  delay(10);
-
+  if (fltSensorCalc<23) {
+    turn(800);
+  }
 
   // Handle the hand
   handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700 && sensed;
@@ -146,7 +156,7 @@ void loop() {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
     beepCountdown++;
-    digitalWrite(buzzer, HIGH);
+    //digitalWrite(buzzer, HIGH);
     //tone(buzzer, 1000); // Send 1KHz sound signal...
     delay(1000);
     digitalWrite(buzzer, LOW);
@@ -160,17 +170,18 @@ void loop() {
 
   // Sanitize
   if (beepCountdown > 2) {
-    digitalWrite(mosfetPump, HIGH);
+    //digitalWrite(mosfetPump, HIGH);
     delay(150);
     digitalWrite(mosfetPump, LOW);
     delay(1000);
   }
 
+
   //Drive
   Serial.println();
   if (!handSensed && beepCountdown == 0) {
-    motorL.setSpeed(105);
-    motorR.setSpeed(-100);
+    motorL.setSpeed(sqrt(fltSensorCalc)*20+10);
+    motorR.setSpeed(-sqrt(fltSensorCalc)*20+10);
   }
 
 }
