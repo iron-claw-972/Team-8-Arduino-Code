@@ -154,10 +154,6 @@ void loop() {
 //  Serial.print(fltSensorCalc); //Send distance to computer
 //  Serial.println(" cm"); //Add cm to result
 
-  if (fltSensorCalc<23) {
-    turn(800);
-  }
-
   // Handle the hand
   handSensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && sensed
   sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
@@ -197,23 +193,17 @@ void loop() {
       motorR.setSpeed(-100);
 
     } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
-      motorL.setSpeed(105);
-      motorR.setSpeed(100);
-      delay(750); //TODO: Find correct time to do 135 degree turn
+      turn(-900);
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
 
     } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
-      motorL.setSpeed(-105);
-      motorR.setSpeed(-100);
-      delay(750); //TODO: Find correct time to do 135 degree turn
+      turn(900);
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
 
     } else {
-      //otherwise if not left or right or nothing it will do 180
-      motorL.setSpeed(105);
-      motorR.setSpeed(100);
+      turn(1600);
       delay(1000); //TODO: Find correct time to do 180 degree turn
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
