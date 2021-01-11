@@ -181,7 +181,6 @@ void loop() {
   Serial.println();
   if (!handSensed && beepCountdown==0){
     //not sanitizing, chooses which direction to drive
-    //whichever limit switch has the greatest output will decide the direction
 
     if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 25){
       //noting detected, keep moving foward
@@ -200,7 +199,6 @@ void loop() {
 
     } else {
       turn(1600);
-      delay(1000); //TODO: Find correct time to do 180 degree turn
       motorL.setSpeed(105);
       motorR.setSpeed(-100);
   }
