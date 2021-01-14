@@ -24,7 +24,6 @@ MPU6050 mpu;
 int intSensorResult = 0; //Sensor result
 float fltSensorCalc = 0; //Calculated value
 unsigned long myTime = millis();
-
 double turnTarget = 0;
 
 bool sensed = false;
@@ -139,7 +138,6 @@ void turn(){
 
 void loop() {
 
-
   // Handle the distance sensor
   //Serial.print(sensor.readRangeContinuousMillimeters());
 
@@ -150,9 +148,9 @@ void loop() {
 //  Serial.println(" cm"); //Add cm to result
 
   // Handle the hand
-  handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIR)==HIGH;
-  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIR)==HIGH;
-  if (handSensed) {
+  handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
+  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
+  if (handSensed && digitalRead(PIR)==HIGH) {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
     beepCountdown++;
@@ -160,8 +158,12 @@ void loop() {
     //tone(buzzer, 1000); // Send 1KHz sound signal...
     delay(1000);
     digitalWrite(buzzer, LOW);
-  }
-  else {
+  } else if (handSensed && digitalRead(PIR)==LOW) {
+    turnTarget = 1600; //is under something, (no heat so not a hand), will do 180
+
+    handSensed = false;
+    beepCountdown = 0;
+  } else {
     handSensed = false;
     beepCountdown = 0;
     //noTone(buzzer);
@@ -174,7 +176,6 @@ void loop() {
     digitalWrite(mosfetPump, LOW);
     delay(1000);
   }
-
 
   //Drive
   Serial.println();
