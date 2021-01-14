@@ -16,7 +16,7 @@ int limSwitchL = -1; //TODO: put correct pins here
 int limSwitchR = -1;
 int limSwitchF1 = -1;
 int limSwitchF2 = -1;
-int PIRsensor = -1;
+int PIR = 2;
 int IR_SENSOR = 0; // Sensor is connected to the analog A0
 
 MPU6050 mpu;
@@ -86,7 +86,7 @@ void setup() {
   pinMode(limSwitchF1, INPUT);
   pinMode(limSwitchF2, INPUT);
 
-  pinMode(PIRsensor, INPUT);
+  pinMode(PIR, INPUT);
 
   Wire.begin();
 
@@ -150,8 +150,8 @@ void loop() {
 //  Serial.println(" cm"); //Add cm to result
 
   // Handle the hand
-  handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIRsensor)==HIGH;
-  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIRsensor)==HIGH;
+  handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIR)==HIGH;
+  sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700 && digitalRead(PIR)==HIGH;
   if (handSensed) {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
