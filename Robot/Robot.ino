@@ -12,6 +12,7 @@ int motorRightA = 10;
 int motorRightB = 11;
 int mosfetPump = 5;
 int buzzer = 4;
+int PIR = 2;
 int IR_SENSOR = 0; // Sensor is connected to the analog A0
 
 MPU6050 mpu;
@@ -23,6 +24,7 @@ unsigned long myTime;
 
 bool sensed = false;
 bool handSensed = false;
+bool PIRSensed = false;
 int beepCountdown = 0;
 
 CytronMD motorL(PWM_PWM, motorLeftA, motorLeftB);
@@ -74,6 +76,7 @@ void setup() {
 
   pinMode(buzzer, OUTPUT);
   pinMode(mosfetPump, OUTPUT);
+  pinMode(PIR, INPUT);
 
   Wire.begin();
 
@@ -119,11 +122,11 @@ void turn(double targetAngle){
   while (((currentAngle-targetAngle)>4) or ((currentAngle-targetAngle)<-4)){
     angleDiff=currentAngle-targetAngle;
     rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
-    delay(5);
     
     motorL.setSpeed(rotationSpeed);
     motorR.setSpeed(-(-rotationSpeed));
-
+    delay(5);
+    
     timeDiff = millis() - myTime;
     myTime = millis();
     currentAngle = getRotation(currentAngle,timeDiff);
@@ -145,12 +148,14 @@ void loop() {
 //  Serial.print(fltSensorCalc); //Send distance to computer
 //  Serial.println(" cm"); //Add cm to result
 
-  if (fltSensorCalc<23) {
-    turn(800);
+  
+  if (fltSensorCalc<20) {
+    turn(90);
   }
 
   // Handle the hand
-  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700 && sensed;
+  PIRSensed = digitalRead(PIR);
+  handSensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700 && sensed && PIRSensed;
   sensed = !sensor.timeoutOccurred() && sensor.readRangeContinuousMillimeters() < 700;
   if (handSensed) {
     motorL.setSpeed(0);
