@@ -22,8 +22,9 @@ MPU6050 mpu;
 
 int intSensorResult = 0; //Sensor result
 float fltSensorCalc = 0; //Calculated value
-unsigned long myTime;
+unsigned long myTime = millis();
 
+double turnTarget = 0;
 
 bool sensed = false;
 bool handSensed = false;
@@ -119,22 +120,17 @@ double getRotation(double currentAngle, int timeDiff){
 }
 
 
-void turn(double targetAngle){
-  double currentAngle = 0;
-  double angleDiff = currentAngle - targetAngle;
-  double rotationSpeed;
-  unsigned long myTime = millis();
-  while (angleDiff > 4 or angleDiff < -4){
-    angleDiff=currentAngle-targetAngle;
-    rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
+void turn(){
+  turnTarget = turnTarget - getRotation(turnTarget, millis() - myTime);
+  myTime = millis();
+  if (turnTarget > 4 or turnTarget < -4){
+    double rotationSpeed = sqrt(sqrt(abs(turnTarget/180))) * 200 * turnTarget/abs(turnTarget);
 
     motorL.setSpeed(rotationSpeed);
     motorR.setSpeed(-(-rotationSpeed));
-    delay(5);
-
-    currentAngle = getRotation(currentAngle, millis() - myTime);
-    myTime = millis();
-    Serial.println(angleDiff);
+  } else {
+    motorL.setSpeed(105);
+    motorR.setSpeed(-100);
   }
 }
 
@@ -179,27 +175,20 @@ void loop() {
 
   //Drive
   Serial.println();
+
   if (!handSensed && beepCountdown==0){
     //not sanitizing, chooses which direction to drive
+    if (turnTarget > 4 or turnTarget < -4) {
+      if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 25){
+        turnTarget = 0;
+      } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
+        turnTarget = 900;
+      } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
+        turnTarget = -900;
+      } else {
+        turnTarget = 1600;
+      }
+    }
 
-    if (digitalRead(limSwitchL)==LOW && digitalRead(limSwitchR)==LOW && digitalRead(limSwitchF1)==LOW && digitalRead(limSwitchF2)==LOW && fltSensorCalc > 25){
-      //noting detected, keep moving foward
-      motorL.setSpeed(105);
-      motorR.setSpeed(-100);
-
-    } else if(digitalRead(limSwitchL)==HIGH && digitalRead(limSwitchR)==LOW){
-      turn(900);
-      motorL.setSpeed(105);
-      motorR.setSpeed(-100);
-
-    } else if (digitalRead(limSwitchR)==HIGH && digitalRead(limSwitchL)==LOW) {
-      turn(-900);
-      motorL.setSpeed(105);
-      motorR.setSpeed(-100);
-
-    } else {
-      turn(1600);
-      motorL.setSpeed(105);
-      motorR.setSpeed(-100);
-  }
+  turn();
 }
