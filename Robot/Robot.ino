@@ -147,6 +147,10 @@ void loop() {
 //  Serial.print(fltSensorCalc); //Send distance to computer
 //  Serial.println(" cm"); //Add cm to result
 
+  if (beepCountdown > 3) {
+    digitalWrite(mosfetPump, LOW);
+  }
+
   // Handle the hand
   handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
   sensed = !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
@@ -154,10 +158,13 @@ void loop() {
     motorL.setSpeed(0);
     motorR.setSpeed(0);
     beepCountdown++;
-    //digitalWrite(buzzer, HIGH);
-    //tone(buzzer, 1000); // Send 1KHz sound signal...
-    delay(1000);
-    digitalWrite(buzzer, LOW);
+    if (beepCountdown % 2 == 0) {
+      digitalWrite(buzzer, LOW)
+    } else {
+      digitalWrite(buzzer, HIGH);
+      tone(buzzer, 1000); // Send 1KHz sound signal...
+    }
+
   } else if (handSensed && digitalRead(PIR)==LOW) {
     turnTarget = 1600; //is under something, (no heat so not a hand), will do 180
 
@@ -166,15 +173,12 @@ void loop() {
   } else {
     handSensed = false;
     beepCountdown = 0;
-    //noTone(buzzer);
+    noTone(buzzer);
   }
 
   // Sanitize
-  if (beepCountdown > 2) {
-    //digitalWrite(mosfetPump, HIGH);
-    delay(150);
-    digitalWrite(mosfetPump, LOW);
-    delay(1000);
+  if (beepCountdown > 3) {
+    digitalWrite(mosfetPump, HIGH);
   }
 
   //Drive
