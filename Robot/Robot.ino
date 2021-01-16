@@ -147,9 +147,7 @@ void loop() {
 //  Serial.print(fltSensorCalc); //Send distance to computer
 //  Serial.println(" cm"); //Add cm to result
 
-  if (beepCountdown > 3) {
-    digitalWrite(mosfetPump, LOW);
-  }
+  digitalWrite(mosfetPump, LOW);
 
   // Handle the hand
   handSensed = sensed && !distSensor.timeoutOccurred() && distSensor.readRangeContinuousMillimeters() < 700;
