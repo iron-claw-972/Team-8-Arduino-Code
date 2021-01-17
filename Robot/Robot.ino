@@ -10,6 +10,12 @@ int motorLeftA = 3;
 int motorLeftB = 9;
 int motorRightA = 10;
 int motorRightB = 11;
+int encoderLeftA = 8;
+int encoderLeftB = 12;
+int encoderRightA = 7;
+int encoderRightB = 6;
+
+
 int mosfetPump = 5;
 int buzzer = 4;
 int PIR = 2;
@@ -78,6 +84,11 @@ void setup() {
   pinMode(mosfetPump, OUTPUT);
   pinMode(PIR, INPUT);
 
+  pinMode(encoderLeftA, INPUT);
+  pinMode(encoderLeftB, INPUT);
+  pinMode(encoderRightA, INPUT);
+  pinMode(encoderRightB, INPUT);
+
   Wire.begin();
 
   sensor.setTimeout(500);
@@ -91,7 +102,7 @@ void setup() {
   // fast as possible).  To use continuous timed mode
   // instead, provide a desired inter-measurement period in
   // ms (e.g. sensor.startContinuous(100)).
-  sensor.startContinuous();
+  sensor.startContinuous(4);
 
   while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -108,7 +119,7 @@ void setup() {
 double getRotation(double currentAngle, int timeDiff){
     Vector normGyro = mpu.readNormalizeGyro();
     currentAngle+=normGyro.ZAxis * timeDiff/1000.0;
-    //w3currentAngle=fmod(currentAngle,360.0);
+    currentAngle=fmod(currentAngle,360.0);
     return currentAngle;
 }
 
@@ -120,12 +131,12 @@ void turn(double targetAngle){
   double rotationSpeed;
   unsigned long myTime = millis();
   while (((currentAngle-targetAngle)>4) or ((currentAngle-targetAngle)<-4)){
-    angleDiff=currentAngle-targetAngle;
+    angleDiff=targetAngle-currentAngle;
     rotationSpeed = sqrt(sqrt(abs(angleDiff/180))) * 200 * angleDiff/abs(angleDiff);
     
-    motorL.setSpeed(rotationSpeed);
-    motorR.setSpeed(-(-rotationSpeed));
-    delay(5);
+    motorL.setSpeed(-rotationSpeed);
+    motorR.setSpeed(-(rotationSpeed));
+    delay(30);
     
     timeDiff = millis() - myTime;
     myTime = millis();
@@ -133,6 +144,8 @@ void turn(double targetAngle){
     Serial.println(angleDiff);
 
   }
+  motorL.setSpeed(0);
+  motorR.setSpeed(0);
   
 }
 
@@ -183,10 +196,11 @@ void loop() {
 
 
   //Drive
-  Serial.println();
+  
   if (!handSensed && beepCountdown == 0) {
     motorL.setSpeed(sqrt(fltSensorCalc)*20+10);
     motorR.setSpeed(-sqrt(fltSensorCalc)*20+10);
   }
+  delay(30);
 
 }
