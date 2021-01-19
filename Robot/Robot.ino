@@ -20,14 +20,14 @@ const int encoderRightA = 7;
 const int encoderRightB = 6;
 
 
-int mosfetPump = 5;
-int buzzer = 4;
-int limSwitchL = -1; //TODO: put correct pins here
-int limSwitchR = -1;
-int limSwitchF1 = -1;
-int limSwitchF2 = -1;
-int PIR = 2;
-int IR_SENSOR = 0; // Sensor is connected to the analog A0
+const int mosfetPump = 5;
+const int buzzer = 4;
+const int limSwitchL = -1; //TODO: put correct pins here
+const int limSwitchR = -1;
+const int limSwitchF1 = -1;
+const int limSwitchF2 = -1;
+const int PIR = 2;
+const int IR_SENSOR = 0; // Sensor is connected to the analog A0
 
 MPU6050 mpu;
 
@@ -40,7 +40,6 @@ bool PIRup = false;
 
 //state variables
 bool sensed = false;
-
 bool handSensed = false;
 bool underSomething = false;
 bool objectClose = false;
@@ -74,7 +73,7 @@ static uint16_t store1=0;
 SimpleTimer timer;
 CytronMD motorL(PWM_PWM, motorLeftA, motorLeftB);
 CytronMD motorR(PWM_PWM, motorRightA, motorRightB);
-VL53L0X sensor;
+VL53L0X distSensor;
 
 
 
@@ -111,7 +110,7 @@ void setup() {
   // fast as possible).  To use continuous timed mode
   // instead, provide a desired inter-measurement period in
   // ms (e.g. sensor.startContinuous(100)).
-  sensor.startContinuous(4);
+  distSensor.startContinuous(4);
 
   while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -130,15 +129,14 @@ void updateState(){
   // Handle the distance sensor
   distanceUp = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
   objectClose = distanceUp<26 and distanceUp>10;
-  objectTooClose = distanceUp<10;
-
 
   // Handle the up sensors
-  distanceUp=sensor.readRangeContinuousMillimeters();
+  //aka Handling the Hand
+  distanceUp=distSensor.readRangeContinuousMillimeters();
   PIRup=digitalRead(PIR);
-  handSensed = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
-  underSomething = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
-  sensed = !sensor.timeoutOccurred() && distanceUp < 700;
+  handSensed = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
+  underSomething = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
+  sensed = !distdistSensor.timeoutOccurred() && distanceUp < 700;
 
   // Handle the spray / buzz
   if (handSensed){
@@ -156,7 +154,7 @@ void updateState(){
   }
 
  //Drive
- if (objectTooClose or crashed or underSomething){
+ if (crashed or underSomething){
   if (not backingUp){
     encoderLeftStarting = encoderLeft;
     encoderRightStarting = encoderRight;
