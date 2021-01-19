@@ -117,9 +117,9 @@ void setup() {
 
 void updateState(){
   // Handle the distance sensor  
-  distanceUp = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-  objectClose = distanceUp<26 and distanceUp>10;
-  objectTooClose = distanceUp<10;
+  distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
+  objectClose = distanceForward<26 and distanceForward>10;
+  objectTooClose = distanceForward<10;
 
 
   // Handle the up sensors
