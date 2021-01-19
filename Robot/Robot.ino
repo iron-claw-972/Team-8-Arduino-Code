@@ -128,15 +128,16 @@ void setup() {
 void updateState(){
   // Handle the distance sensor
   distanceUp = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-  objectClose = distanceUp<26 and distanceUp>10;
+  objectClose = distanceForward<26 and distanceForward>10;
+  objectTooClose = distanceForward<10;
 
   // Handle the up sensors
-  //aka Handling the Hand
+  // aka Handling the Hand
   distanceUp=distSensor.readRangeContinuousMillimeters();
   PIRup=digitalRead(PIR);
   handSensed = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
   underSomething = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
-  sensed = !distdistSensor.timeoutOccurred() && distanceUp < 700;
+  sensed = !distSensor.timeoutOccurred() && distanceUp < 700;
 
   // Handle the spray / buzz
   if (handSensed){
@@ -154,7 +155,7 @@ void updateState(){
   }
 
  //Drive
- if (crashed or underSomething){
+ if (objectTooClose or crashed or underSomething){
   if (not backingUp){
     encoderLeftStarting = encoderLeft;
     encoderRightStarting = encoderRight;
