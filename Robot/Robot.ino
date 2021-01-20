@@ -18,7 +18,10 @@ const int encoderLeftA = 8;
 const int encoderLeftB = 12;
 const int encoderRightA = 7;
 const int encoderRightB = 6;
-
+const int limSwitchL = A1;
+const int limSwitchR = A7;
+const int limSwitchF1 = A2;
+const int limSwitchF2 = A6;
 
 int mosfetPump = 5;
 int buzzer = 4;
@@ -57,6 +60,9 @@ double encoderRight = 0;
 double encoderLeftStarting = 0;
 double encoderRightStarting = 0;
 
+bool switchL = false;
+bool switchR = false;
+bool switchF = false;
 
 static uint8_t prevNextCode = 0;
 static uint16_t store=0;
@@ -118,10 +124,23 @@ void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
 
-  if (!backingUp && distanceForward < 10) {
+  if (switchL && !switchR) {
+     backUpAmount = 0;
+     turnAmount = 1;
+   }
+  else if (switchR && !switchL) {
+     backUpAmount = 0;
+     turnAmount = -1;
+   } 
+  else if (!backingUp && switchF){
+    backUpAmount = -0.6;
+    turnAmount = -1.5;
+  }
+  else if (!backingUp && distanceForward < 10) {
     backUpAmount = -0.5; //very close, needs to back up more
     turnAmount = 0.6;
-  } else if (!backingUp && distanceForward < 26) {
+  } 
+  else if (!backingUp && distanceForward < 26) {
     backUpAmount = -0.3;
     turnAmount = 0.6;
   }
@@ -129,16 +148,15 @@ void updateState(){
   // Handle the up sensors
   // aka Handling the Hand
   distanceUp = sensor.readRangeContinuousMillimeters();
-  PIRup = digitalRead(PIR);
-  handSensed = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
-  underSomething = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
-  sensed = !sensor.timeoutOccurred() && distanceUp < 700;
+  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 600;
+  underSomething = !distSensor.timeoutOccurred() && distanceUp < 500 && sensed;
+  sensed = !distSensor.timeoutOccurred() && distanceUp < 800 && distanceUp > 500;
 
   // Handle the spray / buzz
   if (handSensed){
     alarm();
     motorsStopped = true;
-    if (buzzerCount > 3){
+    if (buzzerCount > 2){
       pump();
       buzzerCount = 0;
       motorsStopped = false;
