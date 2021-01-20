@@ -10,6 +10,7 @@
 #include "CytronMotorDriver.h"
 
 #include <Wire.h>
+
 const int motorLeftA = 3;
 const int motorLeftB = 9;
 const int motorRightA = 10;
@@ -22,15 +23,14 @@ const int encoderRightB = 6;
 
 const int mosfetPump = 5;
 const int buzzer = 4;
-const int limSwitchL = -1; //TODO: put correct pins here
-const int limSwitchR = -1;
-const int limSwitchF1 = -1;
-const int limSwitchF2 = -1;
+const int limSwitchL = A1;
+const int limSwitchR = A7;
+const int limSwitchF1 = A2;
+const int limSwitchF2 = A6;
 const int PIR = 2;
-const int IR_SENSOR = 0; // Sensor is connected to the analog A0
+const int IR_SENSOR = A0; // Sensor is connected to the analog A0
 
 MPU6050 mpu;
-
 
 float distanceUp = 0; //Calculated value
 unsigned long prevTime;
@@ -47,6 +47,8 @@ bool objectTooClose = false;
 bool crashed = false;
 bool backingUp = false;
 bool turning = false;
+bool switchBackUp = false;
+double switchTurn = 0;
 
 bool alarmActivated = true;
 bool alarmLoading = false;
@@ -64,7 +66,7 @@ double encoderRightStarting = 0;
 
 
 static uint8_t prevNextCode = 0;
-static uint16_t store=0;
+static uint16_t store = 0;
 
 static uint8_t prevNextCode1 = 0;
 static uint16_t store1=0;
@@ -90,10 +92,10 @@ void setup() {
   pinMode(encoderRightA, INPUT_PULLUP);
   pinMode(encoderRightB, INPUT_PULLUP);
 
-  pinMode(limSwitchL, INPUT);
-  pinMode(limSwitchR, INPUT);
-  pinMode(limSwitchF1, INPUT);
-  pinMode(limSwitchF2, INPUT);
+  pinMode(limSwitchL, INPUT_PULLUP);
+  pinMode(limSwitchR, INPUT_PULLUP);
+  pinMode(limSwitchF1, INPUT_PULLUP);
+  pinMode(limSwitchF2, INPUT_PULLUP);
 
   pinMode(PIR, INPUT);
 
@@ -103,7 +105,6 @@ void setup() {
   if (!distSensor.init())
   {
     Serial.println("Failed to detect and initialize sensor!");
-
   }
 
   // Start continuous back-to-back mode (take readings as
@@ -127,14 +128,14 @@ void setup() {
 
 void updateState(){
   // Handle the distance sensor
-  distanceUp = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-  objectClose = distanceForward<26 and distanceForward>10;
+  distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
+  objectClose = distanceForward<26 && distanceForward>10;
   objectTooClose = distanceForward<10;
 
   // Handle the up sensors
   // aka Handling the Hand
-  distanceUp=distSensor.readRangeContinuousMillimeters();
-  PIRup=digitalRead(PIR);
+  distanceUp = distSensor.readRangeContinuousMillimeters();
+  PIRup = digitalRead(PIR);
   handSensed = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
   underSomething = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
   sensed = !distSensor.timeoutOccurred() && distanceUp < 700;
@@ -155,7 +156,7 @@ void updateState(){
   }
 
  //Drive
- if (objectTooClose or crashed or underSomething){
+ if (objectTooClose or crashed or underSomething or switchBackUp){
   if (not backingUp){
     encoderLeftStarting = encoderLeft;
     encoderRightStarting = encoderRight;
@@ -171,31 +172,48 @@ void updateState(){
   turning = true;
  }
 
- if (not motorsStopped and not turning and not backingUp){
-   forward(sqrt(distanceUp)*20+10);
- }
- else if (not motorsStopped and turning){
-   turning = turn(0.5, encoderLeftStarting, encoderLeft);
- }
- else if (not motorsStopped and objectTooClose){
-   backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
-   turning=false;
- }
+
+
  if (motorsStopped){
   stopMotors();
+ } else if (objectTooClose){
+    backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
+    turning=false;
+ }
+ else if (turning){
+   turning = turn(0.5, encoderLeftStarting, encoderLeft);
+ }
+ else {
+   bool switchL = digitalRead(limSwitchL);
+   bool switchR = digitalRead(limSwitchR);
+   bool switchF = digitalRead(limSwitchF1) || digitalRead(limSwitchF2);
+   if (!switchL && !switchR && !switchF) {
+     forward(sqrt(distanceUp)*20+10);
+   }
+   else if (switchL && !switchR) {
+     switchBackUp = true;
+     switchTurn = 1.5;
+   }
+   else if (switchR && !switchL)) {
+     switchBackUp = true;
+     switchTurn = -1.5;
+   } else {
+     backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
+     turning = turn(0.5, encoderLeftStarting, encoderLeft);
+   }
  }
 }
 
+
+
 void loop() {
-
-
   // Handle encoder
   encoderLeft += -read_rotary()/63.0;
   encoderRight += -read_rotary1()/78.0;
   //Serial.println(encoderRight);
   timer.run();
-
 }
+
 
 void stopMotors(){
   motorL.setSpeed(0);
@@ -207,9 +225,9 @@ void forward(double vel){
   motorR.setSpeed(-vel);
 }
 bool turn(double rotations, double start, double current){
-  if ((start+rotations)>current){
-    motorL.setSpeed(150);
-    motorR.setSpeed(0);
+  if ((start+math.abs(rotations))>current){
+    motorL.setSpeed(150 * rotations/math.abs(rotations));
+    motorR.setSpeed(150 * rotations/math.abs(rotations));
     return true;
   }
   else{
