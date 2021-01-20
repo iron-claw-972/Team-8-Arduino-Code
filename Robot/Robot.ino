@@ -123,6 +123,10 @@ void setup() {
 
 }
 
+
+
+
+//main loop
 void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
@@ -163,18 +167,18 @@ void updateState(){
   }
 
  //Drive
- if (backUpAmount > 0){
-   if (not backingUp){ //set initial values
-     encoderLeftStarting = encoderLeft;
-     encoderRightStarting = encoderRight;
-   }
-   backingUp = true;
- } else if (turnAmount > 0) {
-   if (not turning and not backingUp){
-     encoderLeftStarting = encoderLeft;
-     encoderRightStarting = encoderRight;
-   }
-   turning = true;
+  if (backUpAmount > 0){
+    if (!backingUp){ //set initial values
+      encoderLeftStarting = encoderLeft;
+      encoderRightStarting = encoderRight;
+    }
+    backingUp = true;
+  } else if (turnAmount > 0) {
+    if (!turning && !backingUp){
+      encoderLeftStarting = encoderLeft;
+      encoderRightStarting = encoderRight;
+    }
+    turning = true;
  }
 
 
@@ -208,6 +212,7 @@ void updateState(){
    }
  }
 }
+
 
 void loop() {
   // Handle encoder
