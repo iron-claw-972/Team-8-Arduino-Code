@@ -51,8 +51,7 @@ bool alarmActivated = true;
 bool alarmLoading = false;
 int buzzerCount = 0;
 
-int motorVelLeft = 100;
-int motorVelRight = 100;
+
 bool motorsStopped = false;
 
 double encoderLeft = 0;
@@ -61,6 +60,9 @@ double encoderRight = 0;
 double encoderLeftStarting = 0;
 double encoderRightStarting = 0;
 
+bool switchL = false;
+bool switchR = false;
+bool switchF = false;
 
 static uint8_t prevNextCode = 0;
 static uint16_t store = 0;
@@ -128,13 +130,28 @@ void setup() {
 
 //main loop
 void updateState(){
-  // Handle the distance sensor
+  // Handle the proximity sensors
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-
-  if (!backingUp && distanceForward < 10) {
+  switchL = digitalRead(limSwitchL);
+  switchR = digitalRead(limSwitchR);
+  switchF = digitalRead(limSwitchF1) || digitalRead(limSwitchF2);
+  if (switchL && !switchR) {
+     backUpAmount = 0;
+     turnAmount = 1;
+   }
+  else if (switchR && !switchL) {
+     backUpAmount = 0;
+     turnAmount = -1;
+   } 
+  else if (!backingUp && switchF){
+    backUpAmount = -0.6;
+    turnAmount = -1.5;
+  }
+  else if (!backingUp && distanceForward < 10) {
     backUpAmount = -0.5; //very close, needs to back up more
     turnAmount = 0.6;
-  } else if (!backingUp && distanceForward < 26) {
+  } 
+  else if (!backingUp && distanceForward < 26) {
     backUpAmount = -0.3;
     turnAmount = 0.6;
   }
@@ -142,16 +159,17 @@ void updateState(){
   // Handle the up sensors
   // aka Handling the Hand
   distanceUp = distSensor.readRangeContinuousMillimeters();
-  PIRup = digitalRead(PIR);
-  handSensed = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
-  underSomething = !distSensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
-  sensed = !distSensor.timeoutOccurred() && distanceUp < 700;
+
+  
+  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 600;
+  underSomething = !distSensor.timeoutOccurred() && distanceUp < 500 && sensed;
+  sensed = !distSensor.timeoutOccurred() && distanceUp < 800 && distanceUp > 500;
 
   // Handle the spray / buzz
   if (handSensed){
     alarm();
     motorsStopped = true;
-    if (buzzerCount>3){
+    if (buzzerCount>2){
       pump();
       buzzerCount=0;
       motorsStopped = false;
@@ -167,13 +185,13 @@ void updateState(){
   }
 
  //Drive
-  if (backUpAmount > 0){
+  if (backUpAmount){
     if (!backingUp){ //set initial values
       encoderLeftStarting = encoderLeft;
       encoderRightStarting = encoderRight;
     }
     backingUp = true;
-  } else if (turnAmount > 0) {
+  } else if (turnAmount) {
     if (!turning && !backingUp){
       encoderLeftStarting = encoderLeft;
       encoderRightStarting = encoderRight;
@@ -194,22 +212,7 @@ void updateState(){
    turning = turn(turnAmount, encoderLeftStarting, encoderLeft);
  }
  else {
-   bool switchL = digitalRead(limSwitchL);
-   bool switchR = digitalRead(limSwitchR);
-   bool switchF = digitalRead(limSwitchF1) || digitalRead(limSwitchF2);
-   if (!switchL && !switchR && !switchF) {
-     forward(sqrt(distanceForward)*20+10);
-   }
-   else if (switchL && !switchR) {
-     switchBackUp = true;
-     switchTurn = 1.5;
-   }
-   else if (switchR && !switchL)) {
-     switchBackUp = true;
-     switchTurn = -1.5;
-   } else {
-
-   }
+   forward(sqrt(distanceForward)*20+10);
  }
 }
 
@@ -233,9 +236,9 @@ void forward(double vel){
 }
 
 bool turn(double rotations, double start, double current){
-  if ((start+math.abs(rotations))>current){
-    motorL.setSpeed(150 * rotations/math.abs(rotations));
-    motorR.setSpeed(150 * rotations/math.abs(rotations));
+  if ((start+abs(rotations))>current){
+    motorL.setSpeed(150 * rotations/abs(rotations));
+    motorR.setSpeed(150 * rotations/abs(rotations));
     return true;
   }
   else{
