@@ -36,14 +36,12 @@ bool PIRup = false;
 
 //state variables
 bool sensed = false;
-
 bool handSensed = false;
 bool underSomething = false;
-bool objectClose = false;
-bool objectTooClose = false;
-bool crashed = false;
 bool backingUp = false;
 bool turning = false;
+double backUpAmount = 0.0;
+double turnAmount = 0.0;
 
 bool alarmActivated = true;
 bool alarmLoading = false;
@@ -118,14 +116,19 @@ void setup() {
 void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-  objectClose = distanceForward<26 and distanceForward>10;
-  objectTooClose = distanceForward<10;
 
+  if (!backingUp && distanceForward < 10) {
+    backUpAmount = -0.5; //very close, needs to back up more
+    turnAmount = 0.6;
+  } else if (!backingUp && distanceForward < 26) {
+    backUpAmount = -0.3;
+    turnAmount = 0.6;
+  }
 
   // Handle the up sensors
   // aka Handling the Hand
-  distanceUp=sensor.readRangeContinuousMillimeters();
-  PIRup=digitalRead(PIR);
+  distanceUp = sensor.readRangeContinuousMillimeters();
+  PIRup = digitalRead(PIR);
   handSensed = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
   underSomething = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && !PIRup;
   sensed = !sensor.timeoutOccurred() && distanceUp < 700;
@@ -134,9 +137,9 @@ void updateState(){
   if (handSensed){
     alarm();
     motorsStopped = true;
-    if (buzzerCount>3){
+    if (buzzerCount > 3){
       pump();
-      buzzerCount=0;
+      buzzerCount = 0;
       motorsStopped = false;
     }
   }
@@ -145,36 +148,43 @@ void updateState(){
     motorsStopped = false;
   }
 
- //Drive
- if (objectTooClose or crashed or underSomething){
-  if (not backingUp){
-    encoderLeftStarting = encoderLeft;
-    encoderRightStarting = encoderRight;
+  if (underSomething) {
+    turnAmount = 2.25; //should be 180 degree turn
   }
-  backingUp = true;
-  turning = false;
- }
- else if (objectClose){
-  if (not turning and not backingUp){
-    encoderLeftStarting = encoderLeft;
-    encoderRightStarting = encoderRight;
-  }
-  turning = true;
- }
 
- if (motorsStopped){
-  stopMotors();
- }
- else if (turning){
-   turning = turn(0.5, encoderLeftStarting, encoderLeft);
- }
- else if (objectTooClose){
-   backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
-   turning=false;
- }
- else {
-   forward(sqrt(distanceUp)*20+10);
- }
+  //start up backingup or turning
+  if (backUpAmount > 0){
+    if (not backingUp){ //set initial values
+      encoderLeftStarting = encoderLeft;
+      encoderRightStarting = encoderRight;
+    }
+    backingUp = true;
+  } else if (turnAmount > 0) {
+    if (not turning and not backingUp){
+      encoderLeftStarting = encoderLeft;
+      encoderRightStarting = encoderRight;
+    }
+    turning = true;
+  }
+
+  //Drive (or stop or turn or backup)
+  if (motorsStopped){
+    stopMotors();
+  } else if (backingUp){
+    backingUp = backUp(backUpAmount, encoderLeftStarting, encoderLeft);
+    if (!backingUp) {
+      backUpAmount = 0;
+    }
+  }
+  else if (turning){
+    turning = turn(turnAmount, encoderLeftStarting, encoderLeft);
+    if (!turning) {
+      turnAmount = 0;
+    }
+  }
+  else {
+    forward(sqrt(distanceUp)*20+10);
+  }
 }
 
 void loop() {
