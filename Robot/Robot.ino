@@ -153,13 +153,14 @@ void updateState(){
   }
 
   //start up backingup or turning
-  if (backUpAmount > 0){
+  if (backUpAmount){
     if (not backingUp){ //set initial values
       encoderLeftStarting = encoderLeft;
       encoderRightStarting = encoderRight;
     }
     backingUp = true;
-  } else if (turnAmount > 0) {
+  } 
+  else if (turnAmount) {
     if (not turning and not backingUp){
       encoderLeftStarting = encoderLeft;
       encoderRightStarting = encoderRight;
@@ -170,7 +171,8 @@ void updateState(){
   //Drive (or stop or turn or backup)
   if (motorsStopped){
     stopMotors();
-  } else if (backingUp){
+  } 
+  else if (backingUp){
     backingUp = backUp(backUpAmount, encoderLeftStarting, encoderLeft);
     if (!backingUp) {
       backUpAmount = 0;
@@ -206,8 +208,8 @@ void forward(double vel){
 }
 
 bool turn(double rotations, double start, double current){
-  if ((start+math.abs(rotations))>current){
-    motorL.setSpeed(150 * rotations/math.abs(rotations));
+  if ((start+abs(rotations))>current){
+    motorL.setSpeed(150 * rotations/abs(rotations));
     motorR.setSpeed(0);
     return true;
   }
