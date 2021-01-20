@@ -42,13 +42,10 @@ bool PIRup = false;
 bool sensed = false;
 bool handSensed = false;
 bool underSomething = false;
-bool objectClose = false;
-bool objectTooClose = false;
-bool crashed = false;
 bool backingUp = false;
 bool turning = false;
-bool switchBackUp = false;
-double switchTurn = 0;
+double backUpAmount = 0.0;
+double turnAmount = 0.0;
 
 bool alarmActivated = true;
 bool alarmLoading = false;
@@ -129,8 +126,14 @@ void setup() {
 void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
-  objectClose = distanceForward<26 && distanceForward>10;
-  objectTooClose = distanceForward<10;
+
+  if (!backingUp && distanceForward < 10) {
+    backUpAmount = -0.5; //very close, needs to back up more
+    turnAmount = 0.6;
+  } else if (!backingUp && distanceForward < 26) {
+    backUpAmount = -0.3;
+    turnAmount = 0.6;
+  }
 
   // Handle the up sensors
   // aka Handling the Hand
@@ -155,40 +158,43 @@ void updateState(){
     motorsStopped = false;
   }
 
- //Drive
- if (objectTooClose or crashed or underSomething or switchBackUp){
-  if (not backingUp){
-    encoderLeftStarting = encoderLeft;
-    encoderRightStarting = encoderRight;
+  if (underSomething) {
+    turnAmount = 2.25; //should be 180 degree turn
   }
-  backingUp = true;
-  turning = false;
- }
- else if (objectClose){
-  if (not turning and not backingUp){
-    encoderLeftStarting = encoderLeft;
-    encoderRightStarting = encoderRight;
-  }
-  turning = true;
- }
 
+ //Drive
+ if (backUpAmount > 0){
+   if (not backingUp){ //set initial values
+     encoderLeftStarting = encoderLeft;
+     encoderRightStarting = encoderRight;
+   }
+   backingUp = true;
+ } else if (turnAmount > 0) {
+   if (not turning and not backingUp){
+     encoderLeftStarting = encoderLeft;
+     encoderRightStarting = encoderRight;
+   }
+   turning = true;
+ }
 
 
  if (motorsStopped){
   stopMotors();
- } else if (objectTooClose){
-    backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
-    turning=false;
+ } else if (backingUp){
+    backingUp = backUp(backUpAmount, encoderLeftStarting, encoderLeft);
+    if (!backingUp) {
+      backUpAmount = 0;
+    }
  }
  else if (turning){
-   turning = turn(0.5, encoderLeftStarting, encoderLeft);
+   turning = turn(turnAmount, encoderLeftStarting, encoderLeft);
  }
  else {
    bool switchL = digitalRead(limSwitchL);
    bool switchR = digitalRead(limSwitchR);
    bool switchF = digitalRead(limSwitchF1) || digitalRead(limSwitchF2);
    if (!switchL && !switchR && !switchF) {
-     forward(sqrt(distanceUp)*20+10);
+     forward(sqrt(distanceForward)*20+10);
    }
    else if (switchL && !switchR) {
      switchBackUp = true;
@@ -198,13 +204,10 @@ void updateState(){
      switchBackUp = true;
      switchTurn = -1.5;
    } else {
-     backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
-     turning = turn(0.5, encoderLeftStarting, encoderLeft);
+
    }
  }
 }
-
-
 
 void loop() {
   // Handle encoder
@@ -213,7 +216,6 @@ void loop() {
   //Serial.println(encoderRight);
   timer.run();
 }
-
 
 void stopMotors(){
   motorL.setSpeed(0);
@@ -224,6 +226,7 @@ void forward(double vel){
   motorL.setSpeed(vel);
   motorR.setSpeed(-vel);
 }
+
 bool turn(double rotations, double start, double current){
   if ((start+math.abs(rotations))>current){
     motorL.setSpeed(150 * rotations/math.abs(rotations));
@@ -234,6 +237,7 @@ bool turn(double rotations, double start, double current){
     return false;
   }
 }
+
 bool backUp(double rotations, double start, double current){
   if ((start+rotations)<current){
     motorL.setSpeed(-150);
@@ -245,10 +249,12 @@ bool backUp(double rotations, double start, double current){
   }
 
 }
+
 void pump(){
   digitalWrite(mosfetPump, HIGH);
   timer.setTimeout(150,[](){digitalWrite(mosfetPump, LOW);});
 }
+
 void alarm(){
   if (!alarmLoading){
     if (alarmActivated){
@@ -346,8 +352,8 @@ int8_t read_rotary1() {
       store1 |= prevNextCode1;
       //if (store1==0xd42b) return 1;
       //if (store1==0xe817) return -1;
-      if ((store1&0xff)==0x2b) return -1;
-      if ((store1&0xff)==0x17) return 1;
+      if ((store1 & 0xff)==0x2b) return -1;
+      if ((store1 & 0xff)==0x17) return 1;
    }
    return 0;
 }
