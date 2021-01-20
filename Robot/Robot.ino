@@ -116,13 +116,14 @@ void setup() {
 }
 
 void updateState(){
-  // Handle the distance sensor  
+  // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
   objectClose = distanceForward<26 and distanceForward>10;
   objectTooClose = distanceForward<10;
 
 
   // Handle the up sensors
+  // aka Handling the Hand
   distanceUp=sensor.readRangeContinuousMillimeters();
   PIRup=digitalRead(PIR);
   handSensed = !sensor.timeoutOccurred() && distanceUp < 700 && sensed && PIRup;
@@ -143,7 +144,7 @@ void updateState(){
     buzzerCount = 0;
     motorsStopped = false;
   }
-  
+
  //Drive
  if (objectTooClose or crashed or underSomething){
   if (not backingUp){
@@ -160,31 +161,28 @@ void updateState(){
   }
   turning = true;
  }
- 
- if (not motorsStopped and not turning and not backingUp){
-   forward(sqrt(distanceUp)*20+10);
+
+ if (motorsStopped){
+  stopMotors();
  }
- else if (not motorsStopped and turning){
+ else if (turning){
    turning = turn(0.5, encoderLeftStarting, encoderLeft);
  }
- else if (not motorsStopped and objectTooClose){
+ else if (objectTooClose){
    backingUp = backUp(-0.3, encoderLeftStarting, encoderLeft);
    turning=false;
  }
- if (motorsStopped){
-  stopMotors();
+ else {
+   forward(sqrt(distanceUp)*20+10);
  }
 }
 
 void loop() {
-  
-  
   // Handle encoder
   encoderLeft += -read_rotary()/63.0;
   encoderRight += -read_rotary1()/78.0;
   //Serial.println(encoderRight);
   timer.run();
-
 }
 
 void stopMotors(){
@@ -196,9 +194,10 @@ void forward(double vel){
   motorL.setSpeed(vel);
   motorR.setSpeed(-vel);
 }
+
 bool turn(double rotations, double start, double current){
-  if ((start+rotations)>current){
-    motorL.setSpeed(150);
+  if ((start+math.abs(rotations))>current){
+    motorL.setSpeed(150 * rotations/math.abs(rotations));
     motorR.setSpeed(0);
     return true;
   }
@@ -215,7 +214,7 @@ bool backUp(double rotations, double start, double current){
   else{
     return false;
   }
-  
+
 }
 void pump(){
   digitalWrite(mosfetPump, HIGH);
