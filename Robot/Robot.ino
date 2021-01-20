@@ -91,7 +91,6 @@ void setup() {
   if (!sensor.init())
   {
     Serial.println("Failed to detect and initialize sensor!");
-
   }
 
   // Start continuous back-to-back mode (take readings as
@@ -110,9 +109,11 @@ void setup() {
   delay(500);
 
   timer.setInterval(100, updateState);
-
 }
 
+
+
+//primary loop that runs the most important things
 void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
@@ -189,6 +190,10 @@ void updateState(){
   }
 }
 
+
+
+
+
 void loop() {
   // Handle encoder
   encoderLeft += -read_rotary()/63.0;
@@ -197,15 +202,18 @@ void loop() {
   timer.run();
 }
 
+
 void stopMotors(){
   motorL.setSpeed(0);
   motorR.setSpeed(0);
 }
 
+
 void forward(double vel){
   motorL.setSpeed(vel);
-  motorR.setSpeed(-vel);
+  motorR.setSpeed(-vel); //right motor is reversed, needs opposite value
 }
+
 
 bool turn(double rotations, double start, double current){
   if ((start+abs(rotations))>current){
@@ -217,35 +225,41 @@ bool turn(double rotations, double start, double current){
     return false;
   }
 }
+
+
 bool backUp(double rotations, double start, double current){
   if ((start+rotations)<current){
     motorL.setSpeed(-150);
-    motorR.setSpeed(150);
+    motorR.setSpeed(150); //right motor is reversed, needs opposite value
     return true;
   }
   else{
     return false;
   }
-
 }
+
+
 void pump(){
   digitalWrite(mosfetPump, HIGH);
-  timer.setTimeout(150,[](){digitalWrite(mosfetPump, LOW);});
+  timer.setTimeout(150,[](){digitalWrite(mosfetPump, LOW);}); //runs this simultaniously
 }
+
+
 void alarm(){
   if (!alarmLoading){
     if (alarmActivated){
       digitalWrite(buzzer, HIGH);
       buzzerCount++;
-      timer.setTimeout(1000,[](){digitalWrite(buzzer, LOW);alarmActivated=false;alarmLoading=false;});
+      timer.setTimeout(1000,[](){digitalWrite(buzzer, LOW);alarmActivated=false;alarmLoading=false;});  //runs this simultaniously
       alarmLoading=true;
     }
     else{
-      timer.setTimeout(200,[](){alarmActivated=true;alarmLoading=false;});
+      timer.setTimeout(200,[](){alarmActivated=true;alarmLoading=false;}); //runs this simultaniously
       alarmLoading=true;
     }
   }
 }
+
 
 double getRotation(double currentAngle, int timeDiff){
     Vector normGyro = mpu.readNormalizeGyro();
