@@ -18,10 +18,9 @@ const int encoderLeftA = 8;
 const int encoderLeftB = 12;
 const int encoderRightA = 7;
 const int encoderRightB = 6;
-const int limSwitchL = A1;
-const int limSwitchR = A7;
-const int limSwitchF1 = A2;
-const int limSwitchF2 = A6;
+const int limSwitchL = A2;
+const int limSwitchR = A1;
+const int limSwitchF = A3;
 
 int mosfetPump = 5;
 int buzzer = 4;
@@ -74,7 +73,7 @@ static uint16_t store1=0;
 SimpleTimer timer;
 CytronMD motorL(PWM_PWM, motorLeftA, motorLeftB);
 CytronMD motorR(PWM_PWM, motorRightA, motorRightB);
-VL53L0X sensor;
+VL53L0X distSensor;
 
 
 
@@ -91,10 +90,14 @@ void setup() {
   pinMode(encoderRightA, INPUT_PULLUP);
   pinMode(encoderRightB, INPUT_PULLUP);
 
+  pinMode(limSwitchL, INPUT_PULLUP);
+  pinMode(limSwitchR, INPUT_PULLUP);
+  pinMode(limSwitchF, INPUT_PULLUP);
+
   Wire.begin();
 
-  sensor.setTimeout(500);
-  if (!sensor.init())
+  distSensor.setTimeout(500);
+  if (!distSensor.init())
   {
     Serial.println("Failed to detect and initialize sensor!");
   }
@@ -103,7 +106,7 @@ void setup() {
   // fast as possible).  To use continuous timed mode
   // instead, provide a desired inter-measurement period in
   // ms (e.g. sensor.startContinuous(100)).
-  sensor.startContinuous(4);
+  distSensor.startContinuous(4);
 
   while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -124,17 +127,31 @@ void updateState(){
   // Handle the distance sensor
   distanceForward = (6787.0 / (analogRead(IR_SENSOR) - 3.0)) - 4.0; //Calculate distance in cm
 
+  switchL = !digitalRead(limSwitchL);
+  switchR = !digitalRead(limSwitchR);
+  switchF = !digitalRead(limSwitchF);
+  Serial.print(switchL);
+  Serial.print(" ");
+  Serial.print(switchR);
+  Serial.print(" ");
+  Serial.println(switchF);
+
+  //switchF=left
+  //switchL=switchF
+  //
+  
   if (switchL && !switchR) {
      backUpAmount = 0;
-     turnAmount = 1;
+     turnAmount = 0.5;
+     Serial.println("L");
    }
   else if (switchR && !switchL) {
      backUpAmount = 0;
-     turnAmount = -1;
+     turnAmount = -0.5;
+     Serial.println("R");
    } 
   else if (!backingUp && switchF){
     backUpAmount = -0.6;
-    turnAmount = -1.5;
   }
   else if (!backingUp && distanceForward < 10) {
     backUpAmount = -0.5; //very close, needs to back up more
@@ -147,10 +164,10 @@ void updateState(){
 
   // Handle the up sensors
   // aka Handling the Hand
-  distanceUp = sensor.readRangeContinuousMillimeters();
-  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 600;
-  underSomething = !distSensor.timeoutOccurred() && distanceUp < 500 && sensed;
-  sensed = !distSensor.timeoutOccurred() && distanceUp < 800 && distanceUp > 500;
+  distanceUp = distSensor.readRangeContinuousMillimeters();
+  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 20;
+  //underSomething = !distSensor.timeoutOccurred() && distanceUp < 500;
+  sensed = !distSensor.timeoutOccurred() && distanceUp < 800 && distanceUp > 20;
 
   // Handle the spray / buzz
   if (handSensed){
@@ -167,9 +184,9 @@ void updateState(){
     motorsStopped = false;
   }
 
-  if (underSomething) {
-    turnAmount = 2.25; //should be 180 degree turn
-  }
+  //if (underSomething) {
+  //  turnAmount = 2.25; //should be 180 degree turn
+  //}
 
   //start up backingup or turning
   if (backUpAmount){
@@ -234,16 +251,15 @@ void forward(double vel){
 
 
 bool turn(double rotations, double start, double current){
-  if ((start+abs(rotations))>current){
+  if ((abs(rotations))>abs(current-start)){
     motorL.setSpeed(150 * rotations/abs(rotations));
-    motorR.setSpeed(0);
+    motorR.setSpeed(150 * rotations/abs(rotations));
     return true;
   }
   else{
     return false;
   }
 }
-
 
 bool backUp(double rotations, double start, double current){
   if ((start+rotations)<current){
