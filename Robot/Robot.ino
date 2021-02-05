@@ -165,7 +165,7 @@ void updateState(){
   // Handle the up sensors
   // aka Handling the Hand
   distanceUp = distSensor.readRangeContinuousMillimeters();
-  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 20;
+  handSensed = !distSensor.timeoutOccurred() && distanceUp < 800 && sensed && distanceUp > 20 or digitalRead(PIR);
   //underSomething = !distSensor.timeoutOccurred() && distanceUp < 500;
   sensed = !distSensor.timeoutOccurred() && distanceUp < 800 && distanceUp > 20;
 
@@ -173,7 +173,7 @@ void updateState(){
   if (handSensed){
     alarm();
     motorsStopped = true;
-    if (buzzerCount > 2){
+    if (buzzerCount > 1){
       pump();
       buzzerCount = 0;
       motorsStopped = false;
